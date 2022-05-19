@@ -47,14 +47,10 @@ app.get("/register", (req, res) => {
 
 app.post("/register", async (req, res) => {
   const { password, username } = req.body;
-  const hash = await bcrypt.hash(password, 12);
-  const user = new User({
-    username,
-    password: hash,
-  });
+  const user = new User({ username, password });
   await user.save();
   req.session.user_id = user._id; //when you succesfully create a new user, we take the user id and store it in the session
-  res.redirect("/secret");
+  res.redirect("/");
 });
 
 app.get("/login", (req, res) => {
@@ -63,13 +59,15 @@ app.get("/login", (req, res) => {
 
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
-  const user = await User.findOne({ username }); //we could also do username: username. This is finding our username in the db
-  const validPassword = await bcrypt.compare(password, user.password); //remember, .compare in bcrypt requires a plain text password as the first argument and then the hash'd password in the db as the second
-  if (validPassword) {
-    req.session.user_id = user._id; //if you do successfully login, we store the user id in the session
+  //coming from models middleware
+  const foundUser = await User.findAndValidate(username, password);
+  //   const user = await User.findOne({ username }); //we could also do username: username. This is finding our username in the db
+  //   const validPassword = await bcrypt.compare(password, user.password); //remember, .compare in bcrypt requires a plain text password as the first argument and then the hash'd password in the db as the second
+  if (foundUser) {
+    req.session.user_id = foundUser._id; //if you do successfully login, we store the user id in the session
     res.redirect("/secret");
   } else {
-    res.send("/login");
+    res.redirect("/login");
   }
 });
 

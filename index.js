@@ -29,6 +29,14 @@ app.use(
   })
 );
 
+//middleware to require a login for endpoints
+const requireLogin = (req, res, next) => {
+  if (!req.session.user_id) {
+    return res.redirect("/login");
+  }
+  next();
+};
+
 app.get("/", (req, res) => {
   res.send("this is the home page");
 });
@@ -71,12 +79,13 @@ app.post("/logout", (req, res) => {
   res.redirect("/login");
 });
 
-app.get("/secret", (req, res) => {
+app.get("/secret", requireLogin, (req, res) => {
   //this only works because the other routes have the user id in the session. No login, no access!
-  if (!req.session.user_id) {
-    return res.redirect("/login");
-  }
   res.render("secret");
+});
+
+app.get("/topsecret", requireLogin, (req, res) => {
+  res.send("TOP SECRET");
 });
 
 app.listen(3000, () => {

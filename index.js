@@ -21,7 +21,13 @@ app.set("view engine", "ejs");
 app.set("views", "views");
 
 app.use(express.urlencoded({ extended: true }));
-app.use(session({ secret: "notagoodsecret" }));
+app.use(
+  session({
+    secret: "notagoodsecret",
+    resave: true,
+    saveUninitialized: true,
+  })
+);
 
 app.get("/", (req, res) => {
   res.send("this is the home page");
@@ -59,12 +65,18 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.use("/secret", (req, res) => {
+app.post("/logout", (req, res) => {
+  req.session.user_id = null; //explicitly setting user id to null
+  //   req.session.destroy(); //we can also do this to remove EVERYTHING and not just user id but, we really only need the session id removed
+  res.redirect("/login");
+});
+
+app.get("/secret", (req, res) => {
   //this only works because the other routes have the user id in the session. No login, no access!
   if (!req.session.user_id) {
-    res.redirect("/login");
+    return res.redirect("/login");
   }
-  res.send("This is secret! You cannot see me unless you login");
+  res.render("secret");
 });
 
 app.listen(3000, () => {
